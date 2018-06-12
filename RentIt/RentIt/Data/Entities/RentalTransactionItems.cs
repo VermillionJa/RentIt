@@ -23,7 +23,7 @@ namespace RentIt.Data.Entities
         public InventoryItem Movie { get; set; }
 
         /// <summary>
-        /// The date the movie should be returned by
+        /// The date the movie must be returned by to avoid penalties
         /// </summary>
         public DateTime DueDate { get; set; }
 
