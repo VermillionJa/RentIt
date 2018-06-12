@@ -11,22 +11,39 @@ using Microsoft.Extensions.Options;
 
 namespace RentIt
 {
+    /// <summary>
+    /// Represents the configuration that the Web Host uses on startup
+    /// </summary>
     public class Startup
     {
+        /// <summary>
+        /// The site configuration
+        /// </summary>
+        public IConfiguration Configuration { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the Startup class
+        /// </summary>
+        /// <param name="configuration">The site configuration</param>
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
-
-        public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
+        
+        /// <summary>
+        /// Adds services to the Dependency Injection Services container
+        /// </summary>
+        /// <param name="services">The Dependency Injection Services container</param>
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// <summary>
+        /// Adds middleware to the Http Request pipeline
+        /// </summary>
+        /// <param name="app">The Application Builder that adds the middleware</param>
+        /// <param name="env">The Hosting Environment</param>
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
