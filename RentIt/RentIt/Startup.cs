@@ -8,6 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using RentIt.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace RentIt
 {
@@ -16,10 +18,7 @@ namespace RentIt
     /// </summary>
     public class Startup
     {
-        /// <summary>
-        /// The site configuration
-        /// </summary>
-        public IConfiguration Configuration { get; }
+        private IConfiguration _config;
 
         /// <summary>
         /// Initializes a new instance of the Startup class
@@ -27,15 +26,17 @@ namespace RentIt
         /// <param name="configuration">The site configuration</param>
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _config = configuration;
         }
-        
+                
         /// <summary>
         /// Adds services to the Dependency Injection Services container
         /// </summary>
         /// <param name="services">The Dependency Injection Services container</param>
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(_config.GetConnectionString("Default")));
+
             services.AddMvc();
         }
 
