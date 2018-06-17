@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RentIt.Data;
 using Microsoft.EntityFrameworkCore;
+using RentIt.Services.Repositories;
 
 namespace RentIt
 {
@@ -36,6 +37,10 @@ namespace RentIt
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(_config.GetConnectionString("Default")));
+
+            services.AddScoped<ICustomerRepo, CustomerRepo>();
+            services.AddScoped<IInventoryRepo, InventoryRepo>();
+            services.AddScoped<IMoviesRepo, MoviesRepo>();
 
             services.AddMvc();
         }

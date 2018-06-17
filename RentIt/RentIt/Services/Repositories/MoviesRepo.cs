@@ -1,4 +1,5 @@
-﻿using RentIt.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using RentIt.Data;
 using RentIt.Data.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace RentIt.Services.Repositories
     /// <summary>
     /// Represents a repository for accessing and manipulating Movie resources
     /// </summary>
-    public class MoviesRepo
+    public class MoviesRepo : IMoviesRepo
     {
         private readonly AppDbContext _context;
 
@@ -29,7 +30,7 @@ namespace RentIt.Services.Repositories
         /// <returns>A collection of Movies</returns>
         public IEnumerable<Movie> GetAll()
         {
-            return _context.Movies;
+            return _context.Movies.Include(m => m.Genre);
         }
 
         /// <summary>
@@ -39,7 +40,7 @@ namespace RentIt.Services.Repositories
         /// <returns>The Movie with the given Id</returns>
         public Movie GetById(int id)
         {
-            return _context.Movies.SingleOrDefault(m => m.Id == id);
+            return _context.Movies.Include(m => m.Genre).SingleOrDefault(m => m.Id == id);
         }
 
         /// <summary>

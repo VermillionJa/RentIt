@@ -14,12 +14,7 @@ namespace RentIt.Data.Entities
         /// The Id of the Record
         /// </summary>
         public int Id { get; set; }
-
-        /// <summary>
-        /// The customer the movies were rented to
-        /// </summary>
-        public Customer Customer { get; set; }
-
+        
         /// <summary>
         /// The date the movies were rented on
         /// </summary>

@@ -1,4 +1,5 @@
-﻿using RentIt.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using RentIt.Data;
 using RentIt.Data.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace RentIt.Services.Repositories
     /// <summary>
     /// Represents a repository for accessing and manipulating Inventory resources
     /// </summary>
-    public class InventoryRepo
+    public class InventoryRepo : IInventoryRepo
     {
         private readonly AppDbContext _context;
 
@@ -30,7 +31,7 @@ namespace RentIt.Services.Repositories
         /// <returns>A collection of Inventory Items for the given Movie Id</returns>
         public IEnumerable<InventoryItem> GetInStockItems(int movieId)
         {
-            return _context.InventoryItems.Where(i => i.Movie.Id == movieId);
+            return _context.InventoryItems.Include(i => i.Movie).Where(i => i.Movie.Id == movieId);
         }
 
         /// <summary>
@@ -53,7 +54,7 @@ namespace RentIt.Services.Repositories
 
         private void UpdateCheckedInStatus(int itemId, bool isCheckedOut)
         {
-            var item = _context.InventoryItems.SingleOrDefault(i => i.Id == itemId);
+            var item = _context.InventoryItems.Include(i => i.Movie).SingleOrDefault(i => i.Id == itemId);
 
             if (item == null)
             {
