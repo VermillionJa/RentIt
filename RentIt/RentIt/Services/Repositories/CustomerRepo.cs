@@ -1,4 +1,5 @@
-﻿using RentIt.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using RentIt.Data;
 using RentIt.Data.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace RentIt.Services.Repositories
     /// <summary>
     /// Represents a repository for accessing and manipulating Customer resources
     /// </summary>
-    public class CustomerRepo
+    public class CustomerRepo : ICustomerRepo
     {
         private readonly AppDbContext _context;
 
@@ -29,7 +30,7 @@ namespace RentIt.Services.Repositories
         /// <returns>A collection of Customers</returns>
         public IEnumerable<Customer> GetAllCustomers()
         {
-            return _context.Customers;
+            return _context.Customers.Include(c => c.RentalTransactions).ThenInclude(t => t.Items);
         }
 
         /// <summary>
@@ -39,7 +40,7 @@ namespace RentIt.Services.Repositories
         /// <returns>The Customer with the given Id</returns>
         public Customer GetCustomerById(int id)
         {
-            return _context.Customers.SingleOrDefault(c => c.Id == id);
+            return _context.Customers.Include(c => c.RentalTransactions).ThenInclude(t => t.Items).SingleOrDefault(c => c.Id == id);
         }
 
         /// <summary>
