@@ -31,12 +31,7 @@ namespace RentIt.Data
         /// The Movie Genres stored in the database
         /// </summary>
         public DbSet<MovieGenre> MovieGenres { get; set; }
-
-        /// <summary>
-        /// The Rental Transactions stored in the database
-        /// </summary>
-        public DbSet<RentalTransaction> RentalTransactions { get; set; }
-
+        
         /// <summary>
         /// Initializes a new instance of the AppDbContext class configured using the given options
         /// </summary>

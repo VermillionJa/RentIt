@@ -54,5 +54,10 @@ namespace RentIt.Data.Entities
         /// The zip code the customer lives in
         /// </summary>
         public string Zip { get; set; }
+
+        /// <summary>
+        /// A collection of Rental Transactions
+        /// </summary>
+        public List<RentalTransaction> RentalTransactions { get; set; }
     }
 }
