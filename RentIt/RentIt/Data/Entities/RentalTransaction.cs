@@ -44,5 +44,10 @@ namespace RentIt.Data.Entities
         /// The total amount paid in this transaction
         /// </summary>
         public decimal TotalAmountCharged { get; set; }
+
+        /// <summary>
+        /// Have the Late Fees been paid, ignored if no Late Fees were owed
+        /// </summary>
+        public bool LateFeesPaid { get; set; }
     }
 }
