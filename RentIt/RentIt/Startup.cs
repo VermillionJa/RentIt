@@ -36,6 +36,8 @@ namespace RentIt
         /// <param name="services">The Dependency Injection Services container</param>
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddStrideLogging();
+
             services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(_config.GetConnectionString("Default")));
 
             services.AddScoped<ICustomerRepo, CustomerRepo>();
