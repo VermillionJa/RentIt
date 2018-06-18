@@ -71,18 +71,8 @@ namespace RentIt.Services
                 return;
             }
 
-            var message = string.Empty;
-
-            if (formatter != null)
-            {
-                message = formatter(state, exception);
-            }
-            else
-            {
-                message = FormatMessage(logLevel, state, exception);
-            }
-
-            //Do something with the message
+            var message = FormatMessage(logLevel, state, exception);
+            
             SendMessageToStride(message);
         }
 
