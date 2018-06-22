@@ -7,13 +7,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RentIt.Services
+namespace RentIt.Services.Logging
 {
     /// <summary>
     /// A Logging Service that logs messages to a Stride Room
     /// </summary>
-    public class StrideLogger : ILogger<StrideLogger>
+    public class StrideLogger : ILogger
     {
+        /// <summary>
+        /// The Category, or Class, that the log messages are being sent from
+        /// </summary>
+        public string Category { get; set; }
+
         private readonly LogLevel _logLevel;
         private readonly string _strideUrl;
         private readonly string _strideAccessToken;

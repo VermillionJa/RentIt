@@ -1,12 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RentIt.Services;
+using RentIt.Services.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace RentIt
+namespace RentIt.Extensions
 {
     /// <summary>
     /// A collection of extension methods for the IServiceCollection interface
@@ -20,6 +21,7 @@ namespace RentIt
         public static void AddStrideLogging(this IServiceCollection services)
         {
             services.AddSingleton<ILogger, StrideLogger>();
+            services.AddSingleton(typeof(ILogger<>), typeof(StrideLogger<>));
 
             IServiceProvider serviceProvider = services.BuildServiceProvider();
 
