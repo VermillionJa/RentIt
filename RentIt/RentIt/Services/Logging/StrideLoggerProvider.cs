@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace RentIt.Services
+namespace RentIt.Services.Logging
 {
     /// <summary>
     /// A Service for creating instances of the StrideLogger Service
@@ -30,7 +30,11 @@ namespace RentIt.Services
         /// <returns>A new StrideLogger instance</returns>
         public ILogger CreateLogger(string categoryName)
         {
-            return _serviceProvider.GetRequiredService<ILogger>();
+            var logger = _serviceProvider.GetRequiredService<ILogger>() as StrideLogger;
+
+            logger.Category = categoryName;
+
+            return logger;
         }
 
         /// <summary>

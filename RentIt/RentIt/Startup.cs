@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using RentIt.Data;
 using Microsoft.EntityFrameworkCore;
 using RentIt.Services.Repositories;
+using RentIt.Extensions;
 
 namespace RentIt
 {
