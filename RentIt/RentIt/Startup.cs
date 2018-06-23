@@ -12,6 +12,7 @@ using RentIt.Data;
 using Microsoft.EntityFrameworkCore;
 using RentIt.Services.Repositories;
 using RentIt.Extensions;
+using RentIt.Services;
 
 namespace RentIt
 {
@@ -44,6 +45,8 @@ namespace RentIt
             services.AddScoped<ICustomerRepo, CustomerRepo>();
             services.AddScoped<IInventoryRepo, InventoryRepo>();
             services.AddScoped<IMoviesRepo, MoviesRepo>();
+
+            services.AddTransient<IPricingLookup, PricingLookup>();
 
             services.AddMvc();
         }
