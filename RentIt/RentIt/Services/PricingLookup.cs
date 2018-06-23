@@ -21,6 +21,7 @@ namespace RentIt.Services
         private readonly double _regularCategoryLimitYears;
 
         private readonly Dictionary<MoviePricingCategory, decimal> rentalPricing;
+        private readonly Dictionary<MoviePricingCategory, decimal> feePricing;
 
         /// <summary>
         /// Initializes a new instance of the PricingLookup class
@@ -33,11 +34,17 @@ namespace RentIt.Services
             _newCategoryLimitYears = double.Parse(_config["Pricing:CategoryLimits:New"]);
             _regularCategoryLimitYears = double.Parse(_config["Pricing:CategoryLimits:Regular"]);
 
-            rentalPricing = new Dictionary<MoviePricingCategory, decimal>
+            rentalPricing = GetPricingTable("Rentals");
+            feePricing = GetPricingTable("Fees");
+        }
+
+        private Dictionary<MoviePricingCategory, decimal> GetPricingTable(string pricingType)
+        {
+            return new Dictionary<MoviePricingCategory, decimal>
             {
-                { MoviePricingCategory.New, decimal.Parse(_config["Pricing:Rentals:New"]) },
-                { MoviePricingCategory.Regular, decimal.Parse(_config["Pricing:Rentals:Regular"]) },
-                { MoviePricingCategory.Old, decimal.Parse(_config["Pricing:Rentals:Old"]) }
+                { MoviePricingCategory.New, decimal.Parse(_config[$"Pricing:{pricingType}:New"]) },
+                { MoviePricingCategory.Regular, decimal.Parse(_config[$"Pricing:{pricingType}:Regular"]) },
+                { MoviePricingCategory.Old, decimal.Parse(_config[$"Pricing:{pricingType}:Old"]) }
             };
         }
 
@@ -47,6 +54,14 @@ namespace RentIt.Services
             var rentalPricePerDay = rentalPricing[pricingCategory];
 
             return rentalPricePerDay * numberOfDays;
+        }
+
+        public decimal GetFeePricing(int numberOfDaysLate, DateTime dateMovieReleased)
+        {
+            var pricingCategory = GetPricingCategory(dateMovieReleased);
+            var feePricePerDay = feePricing[pricingCategory];
+
+            return feePricePerDay * numberOfDaysLate;
         }
 
         private MoviePricingCategory GetPricingCategory(DateTime dateMovieReleased)
