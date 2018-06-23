@@ -16,9 +16,8 @@ namespace RentIt.Services
         private enum MoviePricingCategory { New, Regular, Old };
         
         private readonly IConfiguration _config;
-
-        private readonly double _newCategoryLimitYears;
-        private readonly double _regularCategoryLimitYears;
+        
+        private readonly Dictionary<MoviePricingCategory, TimeSpan> categoryLimits;
 
         private readonly Dictionary<MoviePricingCategory, decimal> rentalPricing;
         private readonly Dictionary<MoviePricingCategory, decimal> feePricing;
@@ -30,32 +29,33 @@ namespace RentIt.Services
         public PricingLookup(IConfiguration config)
         {
             _config = config;
-
-            _newCategoryLimitYears = double.Parse(_config["Pricing:CategoryLimits:New"]);
-            _regularCategoryLimitYears = double.Parse(_config["Pricing:CategoryLimits:Regular"]);
+            
+            categoryLimits = GetCategoryLimitsTable();
 
             rentalPricing = GetPricingTable("Rentals");
             feePricing = GetPricingTable("Fees");
         }
 
-        private Dictionary<MoviePricingCategory, decimal> GetPricingTable(string pricingType)
-        {
-            return new Dictionary<MoviePricingCategory, decimal>
-            {
-                { MoviePricingCategory.New, decimal.Parse(_config[$"Pricing:{pricingType}:New"]) },
-                { MoviePricingCategory.Regular, decimal.Parse(_config[$"Pricing:{pricingType}:Regular"]) },
-                { MoviePricingCategory.Old, decimal.Parse(_config[$"Pricing:{pricingType}:Old"]) }
-            };
-        }
-
-        public decimal GetRentalPricing(int numberOfDays, DateTime dateMovieReleased)
+        /// <summary>
+        /// Get the total Rental Price for a movie based upon when the movie was released and how many days it will be rented
+        /// </summary>
+        /// <param name="numberOfDaysToRent">The number of days the movie will be rented</param>
+        /// <param name="dateMovieReleased">The date the movie was released</param>
+        /// <returns>The total price for renting the movie</returns>
+        public decimal GetRentalPricing(int numberOfDaysToRent, DateTime dateMovieReleased)
         {
             var pricingCategory = GetPricingCategory(dateMovieReleased);
             var rentalPricePerDay = rentalPricing[pricingCategory];
 
-            return rentalPricePerDay * numberOfDays;
+            return rentalPricePerDay * numberOfDaysToRent;
         }
 
+        /// <summary>
+        /// Get the total Fees for a movie based upon when the movie was released and how many days late it was returned
+        /// </summary>
+        /// <param name="numberOfDaysLate">The number of days late the movie was returned</param>
+        /// <param name="dateMovieReleased">The date the movie was released</param>
+        /// <returns>The total price of late fees the movie</returns>
         public decimal GetFeePricing(int numberOfDaysLate, DateTime dateMovieReleased)
         {
             var pricingCategory = GetPricingCategory(dateMovieReleased);
@@ -64,20 +64,48 @@ namespace RentIt.Services
             return feePricePerDay * numberOfDaysLate;
         }
 
+        private Dictionary<MoviePricingCategory, TimeSpan> GetCategoryLimitsTable()
+        {
+            return new Dictionary<MoviePricingCategory, TimeSpan>
+            {
+                { MoviePricingCategory.New, GetCategoryLimit(MoviePricingCategory.New) },
+                { MoviePricingCategory.Regular, GetCategoryLimit(MoviePricingCategory.Regular) },
+                { MoviePricingCategory.Old, GetCategoryLimit(MoviePricingCategory.Old) }
+            };
+        }
+
+        private TimeSpan GetCategoryLimit(MoviePricingCategory pricingCategory)
+        {
+            var years = double.Parse(_config[$"Pricing:CategoryLimits:{pricingCategory}"]);
+
+            return TimeSpan.FromDays(DaysInYear * years);
+        }
+
+        private Dictionary<MoviePricingCategory, decimal> GetPricingTable(string pricingType)
+        {
+            return new Dictionary<MoviePricingCategory, decimal>
+            {
+                { MoviePricingCategory.New, GetPricing(pricingType, MoviePricingCategory.New) },
+                { MoviePricingCategory.Regular, GetPricing(pricingType, MoviePricingCategory.Regular) },
+                { MoviePricingCategory.Old, GetPricing(pricingType, MoviePricingCategory.Old) }
+            };
+        }
+
+        private decimal GetPricing(string pricingType, MoviePricingCategory pricingCategory)
+        {
+            return decimal.Parse(_config[$"Pricing:{pricingType}:{pricingCategory}"]);
+        }
+
         private MoviePricingCategory GetPricingCategory(DateTime dateMovieReleased)
         {
-            var newCategoryLimit = TimeSpan.FromDays(DaysInYear * _newCategoryLimitYears);
-            var regularCategoryLimit = TimeSpan.FromDays(DaysInYear * _regularCategoryLimitYears);
-
             var timeReleased = DateTime.Now.Date - dateMovieReleased.Date;
-
             var pricingCategory = MoviePricingCategory.Old;
 
-            if (timeReleased <= newCategoryLimit)
+            if (timeReleased <= categoryLimits[MoviePricingCategory.New])
             {
                 pricingCategory = MoviePricingCategory.New;
             }
-            else if (timeReleased <= regularCategoryLimit)
+            else if (timeReleased <= categoryLimits[MoviePricingCategory.Regular])
             {
                 pricingCategory = MoviePricingCategory.Regular;
             }
