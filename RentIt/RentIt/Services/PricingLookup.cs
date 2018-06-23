@@ -9,7 +9,7 @@ namespace RentIt.Services
     /// <summary>
     /// A Service for retrieving Pricing information for Rentals and Late Fees
     /// </summary>
-    public class PricingLookup
+    public class PricingLookup : IPricingLookup
     {
         private const int DaysInYear = 365;
 
