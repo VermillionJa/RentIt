@@ -11,6 +11,8 @@ using Microsoft.Extensions.Options;
 using RentIt.Data;
 using Microsoft.EntityFrameworkCore;
 using RentIt.Services.Repositories;
+using RentIt.Extensions;
+using RentIt.Services;
 
 namespace RentIt
 {
@@ -36,11 +38,15 @@ namespace RentIt
         /// <param name="services">The Dependency Injection Services container</param>
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddStrideLogging();
+
             services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(_config.GetConnectionString("Default")));
 
             services.AddScoped<ICustomerRepo, CustomerRepo>();
             services.AddScoped<IInventoryRepo, InventoryRepo>();
             services.AddScoped<IMoviesRepo, MoviesRepo>();
+
+            services.AddTransient<IPricingLookup, PricingLookup>();
 
             services.AddMvc();
         }
