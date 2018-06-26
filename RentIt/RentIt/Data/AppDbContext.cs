@@ -38,8 +38,33 @@ namespace RentIt.Data
         /// <param name="options">The options to configure the context with</param>
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
-            Database.EnsureCreated();
             Database.Migrate();
+
+            SeedMovieGenres();
+        }
+
+        private void SeedMovieGenres()
+        {
+            if (!MovieGenres.Any())
+            {
+                AddMovieGenre("Comedy");
+                AddMovieGenre("Action");
+                AddMovieGenre("Drama");
+                AddMovieGenre("Horror");
+                AddMovieGenre("Documentary");
+                AddMovieGenre("Romance");
+                AddMovieGenre("Thriller");
+
+                SaveChanges();
+            }
+        }
+
+        private void AddMovieGenre(string name)
+        {
+            MovieGenres.Add(new MovieGenre
+            {
+                Name = name
+            });
         }
     }
 }

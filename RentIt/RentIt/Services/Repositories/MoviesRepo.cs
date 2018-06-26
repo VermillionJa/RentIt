@@ -81,5 +81,26 @@ namespace RentIt.Services.Repositories
             _context.Movies.Remove(movie);
             _context.SaveChanges();
         }
+
+        /// <summary>
+        /// Gets the Movie Genre with the given name
+        /// </summary>
+        /// <param name="genre">The name of the Genre</param>
+        /// <returns>The Movie Genre with the given name</returns>
+        public MovieGenre GetGenreByName(string genre)
+        {
+            return _context.MovieGenres.FirstOrDefault(g => g.Name.ToUpper() == genre.ToUpper());
+        }
+
+        /// <summary>
+        /// Checks to see if a Movie exists with the same Title and Release Date
+        /// </summary>
+        /// <param name="title">The Title of the Movie</param>
+        /// <param name="releaseDate">The Release Date of the Movie</param>
+        /// <returns>True if a Movie exists with the same Title and Release Date</returns>
+        public bool Exists(string title, DateTime releaseDate)
+        {
+            return _context.Movies.Any(m => m.Title.ToUpper() == title.ToUpper() && m.ReleaseDate.Date == releaseDate.Date);
+        }
     }
 }
