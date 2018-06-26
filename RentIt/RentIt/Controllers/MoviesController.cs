@@ -11,6 +11,7 @@ using RentIt.Models.ObjectResults;
 using RentIt.Data.Entities;
 using RentIt.Models.Movies;
 using System.Text;
+using RentIt.RequestFilters.Auth;
 
 namespace RentIt.Controllers
 {
@@ -45,6 +46,7 @@ namespace RentIt.Controllers
         /// 201 - Created - If the Movie was successfully added, also returns the URL to GET the new Movie at and the Movie object
         /// </returns>
         [HttpPost]
+        [BasicAuth("Manager")]
         public IActionResult AddMovie([FromBody] AddMovieDto movieDto)
         {
             if (movieDto == null)
@@ -82,7 +84,7 @@ namespace RentIt.Controllers
                         logMessage.AppendLine($"\t{error.ErrorMessage}");
                     }
                 }
-
+                
                 _logger.LogDebug(logMessage.ToString());
 
 
