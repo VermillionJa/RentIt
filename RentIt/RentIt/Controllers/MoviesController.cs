@@ -10,6 +10,7 @@ using RentIt.Models;
 using RentIt.Models.ObjectResults;
 using RentIt.Data.Entities;
 using RentIt.Models.Movies;
+using System.Text;
 
 namespace RentIt.Controllers
 {
@@ -48,6 +49,8 @@ namespace RentIt.Controllers
         {
             if (movieDto == null)
             {
+                _logger.LogDebug("Add Movie - 400 - Bad Request");
+
                 return BadRequest(ModelState);
             }
 
@@ -65,11 +68,36 @@ namespace RentIt.Controllers
 
             if (!ModelState.IsValid)
             {
+                var logMessage = new StringBuilder();
+                
+                logMessage.AppendLine("Add Movie - 422 - Unprocessable Entity");
+                logMessage.AppendLine("Errors:");
+
+                foreach (var entry in ModelState)
+                {
+                    logMessage.AppendLine(entry.Key);
+
+                    foreach (var error in entry.Value.Errors)
+                    {
+                        logMessage.AppendLine($"\t{error.ErrorMessage}");
+                    }
+                }
+
+                _logger.LogDebug(logMessage.ToString());
+
+
                 return new UnprocessableEntityObjectResult(ModelState);
             }
 
             if (_repo.Exists(movieDto.Title, movieDto.ReleaseDate))
             {
+                var logMessage = new StringBuilder();
+
+                logMessage.AppendLine("Add Movie - 409 - Conflict");
+                logMessage.AppendLine($"The Movie '{movieDto.Title}' released on {movieDto.ReleaseDate.ToShortDateString()} already exists");
+
+                _logger.LogDebug(logMessage.ToString());
+
                 return new ConflictObjectResult($"The Movie '{movieDto.Title}' released on {movieDto.ReleaseDate.ToShortDateString()} already exists");
             }
 
@@ -83,7 +111,7 @@ namespace RentIt.Controllers
             };
 
             _repo.Add(movie);
-
+            
             var returnDto = new MovieDto
             {
                 Id = movie.Id,
@@ -93,6 +121,13 @@ namespace RentIt.Controllers
                 Rating = movie.Rating,
                 Genre = movie.Genre.Name
             };
+
+            var successLogMessage = new StringBuilder();
+
+            successLogMessage.AppendLine("Add Movie - 201 - Created");
+            successLogMessage.AppendLine($"The Movie '{movieDto.Title}' released on {movieDto.ReleaseDate.ToShortDateString()} was successfully added");
+
+            _logger.LogInformation(successLogMessage.ToString());
 
             return CreatedAtRoute("GetMovie", new { Id = returnDto.Id }, returnDto);
         }

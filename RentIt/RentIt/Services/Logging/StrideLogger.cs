@@ -86,6 +86,7 @@ namespace RentIt.Services.Logging
             var message = new StringBuilder();
 
             message.AppendLine($"Level: {logLevel}");
+            message.AppendLine($"Category: {Category}");
             message.AppendLine($"Message: {state}");
 
             if (exception != null)
