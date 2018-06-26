@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using RentIt.Data.Entities;
 
 namespace RentIt.Services.Repositories
@@ -29,6 +30,13 @@ namespace RentIt.Services.Repositories
         Movie GetById(int id);
 
         /// <summary>
+        /// Gets the Movie Genre with the given name
+        /// </summary>
+        /// <param name="genre">The name of the Genre</param>
+        /// <returns>The Movie Genre with the given name</returns>
+        MovieGenre GetGenreByName(string genre);
+
+        /// <summary>
         /// Removes the Movie with the given Id
         /// </summary>
         /// <param name="id">The Id of the Movie to remove</param>
@@ -45,5 +53,13 @@ namespace RentIt.Services.Repositories
         /// </summary>
         /// <param name="movie">The updated Movie data</param>
         void Update(Movie movie);
+
+        /// <summary>
+        /// Checks to see if a Movie exists with the same Title and Release Date
+        /// </summary>
+        /// <param name="title">The Title of the Movie</param>
+        /// <param name="releaseDate">The Release Date of the Movie</param>
+        /// <returns>True if a Movie exists with the same Title and Release Date</returns>
+        bool Exists(string title, DateTime releaseDate);
     }
 }
