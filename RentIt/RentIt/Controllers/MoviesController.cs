@@ -35,6 +35,41 @@ namespace RentIt.Controllers
             _repo = repo;
             _logger = logger;
         }
+        
+        /// <summary>
+        /// Gets a Movie from the Movie Collection
+        /// </summary>
+        /// <param name="id">The Id of the Movie to get</param>
+        /// <returns>The Movie with the given Id</returns>
+        [HttpGet("{id}", Name = "GetMovie")]
+        public IActionResult GetMovie(int id)
+        {
+            var movie = _repo.GetById(id);
+            
+            if (movie == null)
+            {
+                var logMessage = new StringBuilder();
+
+                logMessage.AppendLine("Get Movie - 404 - Not Found");
+                logMessage.AppendLine($"The Movie with Id {id} does not exist");
+
+                _logger.LogDebug(logMessage.ToString());
+
+                return NotFound($"Movie with Id {id} does not exist");
+            }
+            
+            var movieDto = new MovieDto
+            {
+                Id = movie.Id,
+                Title = movie.Title,
+                Description = movie.Description,
+                ReleaseDate = movie.ReleaseDate,
+                Rating = movie.Rating,
+                Genre = movie.Genre.Name
+            };
+
+            return Ok(movieDto);
+        }
 
         /// <summary>
         /// Adds a Movie to the Movie Collection
