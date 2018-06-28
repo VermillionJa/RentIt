@@ -37,6 +37,28 @@ namespace RentIt.Controllers
         }
         
         /// <summary>
+        /// Gets all the Movies in the Movie Collection
+        /// </summary>
+        /// <returns>A collection of Movies</returns>
+        [HttpGet]
+        public IActionResult GetMovies()
+        {
+            var movies = _repo.GetAll();
+            
+            var movieDtos = movies.Select(m => new MovieDto()
+            {
+                Id = m.Id,
+                Title = m.Title,
+                Description = m.Description,
+                ReleaseDate = m.ReleaseDate,
+                Rating = m.Rating,
+                Genre = m.Genre.Name
+            });
+            
+            return Ok(movieDtos);
+        }
+
+        /// <summary>
         /// Gets a Movie from the Movie Collection
         /// </summary>
         /// <param name="id">The Id of the Movie to get</param>
