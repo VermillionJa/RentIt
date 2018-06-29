@@ -35,11 +35,13 @@ namespace RentIt.Controllers
             _repo = repo;
             _logger = logger;
         }
-        
+
         /// <summary>
         /// Gets all the Movies in the Movie Collection
         /// </summary>
-        /// <returns>A collection of Movies</returns>
+        /// <returns>
+        /// 200 - Ok - Returns a collection with all of the Movies
+        /// </returns>
         [HttpGet]
         public IActionResult GetMovies()
         {
@@ -62,7 +64,10 @@ namespace RentIt.Controllers
         /// Gets a Movie from the Movie Collection
         /// </summary>
         /// <param name="id">The Id of the Movie to get</param>
-        /// <returns>The Movie with the given Id</returns>
+        /// <returns>
+        /// 404 - Not Found - If no Movie with the given Id was found
+        /// 200 - Ok - Returns a collection with all of the Movies
+        /// </returns>
         [HttpGet("{id}", Name = "GetMovie")]
         public IActionResult GetMovie(int id)
         {
@@ -189,6 +194,88 @@ namespace RentIt.Controllers
             _logger.LogInformation(successLogMessage.ToString());
 
             return CreatedAtRoute("GetMovie", new { Id = returnDto.Id }, returnDto);
+        }
+        
+        /// <summary>
+        /// Performs a full update of the Movie with the given Id
+        /// </summary>
+        /// <param name="id">The Id of the Movie to update</param>
+        /// <param name="movieDto">The new data to update the Movie with</param>
+        /// <returns>
+        /// 400 - Bad Request - If the JSON syntax is invalid
+        /// 422 - Unprocessable Entity - If the JSON syntax is valid, but the content is invalid
+        /// 404 - Not Found - If no Movie with the given Id was found
+        /// 204 - No Content
+        /// </returns>
+        [BasicAuth("Manager")]
+        [HttpPut("{id}")]
+        public IActionResult FullUpdateMovie(int id, [FromBody] AddMovieDto movieDto)
+        {
+            if (movieDto == null)
+            {
+                _logger.LogDebug("Full Update Movie - 400 - Bad Request");
+
+                return BadRequest(ModelState);
+            }
+
+            MovieGenre genre = null;
+
+            if (!string.IsNullOrWhiteSpace(movieDto.Genre))
+            {
+                genre = _repo.GetGenreByName(movieDto.Genre);
+
+                if (genre == null)
+                {
+                    ModelState.AddModelError(nameof(movieDto.Genre), $"{movieDto.Genre} is not a valid Genre");
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var logMessage = new StringBuilder();
+
+                logMessage.AppendLine("Full Update Movie - 422 - Unprocessable Entity");
+                logMessage.AppendLine("Errors:");
+
+                foreach (var entry in ModelState)
+                {
+                    logMessage.AppendLine(entry.Key);
+
+                    foreach (var error in entry.Value.Errors)
+                    {
+                        logMessage.AppendLine($"\t{error.ErrorMessage}");
+                    }
+                }
+
+                _logger.LogDebug(logMessage.ToString());
+
+
+                return new UnprocessableEntityObjectResult(ModelState);
+            }
+
+            var movie = _repo.GetById(id);
+
+            if (movie == null)
+            {
+                var logMessage = new StringBuilder();
+
+                logMessage.AppendLine("Full Update Movie - 404 - Not Found");
+                logMessage.AppendLine($"The Movie with Id {id} does not exist");
+
+                _logger.LogDebug(logMessage.ToString());
+
+                return NotFound($"Movie with Id {id} does not exist");
+            }
+
+            movie.Title = movieDto.Title;
+            movie.Description = movieDto.Description;
+            movie.ReleaseDate = movieDto.ReleaseDate;
+            movie.Rating = movieDto.Rating;
+            movie.Genre = genre;
+
+            _repo.Update(movie);
+
+            return NoContent();
         }
     }
 }
