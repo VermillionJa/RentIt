@@ -12,6 +12,7 @@ using RentIt.Data.Entities;
 using RentIt.Models.Movies;
 using System.Text;
 using RentIt.RequestFilters.Auth;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace RentIt.Controllers
 {
@@ -275,6 +276,107 @@ namespace RentIt.Controllers
 
             _repo.Update(movie);
 
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Performs a partial update of the Movie with the given Id
+        /// </summary>
+        /// <param name="id">The Id of the Movie to update</param>
+        /// <param name="patchDoc">A JSON Patch Document with instructions on how to update the Movie</param>
+        /// <returns>
+        /// 400 - Bad Request - If the JSON syntax is invalid
+        /// 422 - Unprocessable Entity - If the JSON syntax is valid, but the content is invalid
+        /// 404 - Not Found - If no Movie with the given Id was found
+        /// 204 - No Content
+        /// </returns>
+        [BasicAuth("Manager")]
+        [HttpPatch("{id}")]
+        public IActionResult PartialUpdateMovie(int id, [FromBody] JsonPatchDocument<AddMovieDto> patchDoc)
+        {
+            //Check if the patchDoc is null
+            if (patchDoc == null)
+            {
+                _logger.LogDebug("Partial Update Movie - 400 - Bad Request");
+
+                return BadRequest(ModelState);
+            }
+
+            //Get the Movie from the repo
+            var movie = _repo.GetById(id);
+
+            if (movie == null)
+            {
+                var logMessage = new StringBuilder();
+
+                logMessage.AppendLine("Partial Update Movie - 404 - Not Found");
+                logMessage.AppendLine($"The Movie with Id {id} does not exist");
+
+                _logger.LogDebug(logMessage.ToString());
+
+                return NotFound($"Movie with Id {id} does not exist");
+            }
+
+            //Convert the Movie to a Dto
+            var movieDto = new AddMovieDto
+            {
+                Title = movie.Title,
+                Description = movie.Description,
+                ReleaseDate = movie.ReleaseDate,
+                Rating = movie.Rating,
+                Genre = movie.Genre.Name
+            };
+
+            //Apply the patch to the Dto
+            patchDoc.ApplyTo(movieDto, ModelState);
+
+            //Validate the Dto (ModelState)
+            MovieGenre genre = null;
+
+            if (!string.IsNullOrWhiteSpace(movieDto.Genre))
+            {
+                genre = _repo.GetGenreByName(movieDto.Genre);
+
+                if (genre == null)
+                {
+                    ModelState.AddModelError(nameof(movieDto.Genre), $"{movieDto.Genre} is not a valid Genre");
+                }
+            }
+            
+            if (!TryValidateModel(movieDto))
+            {
+                var logMessage = new StringBuilder();
+
+                logMessage.AppendLine("Partial Update Movie - 422 - Unprocessable Entity");
+                logMessage.AppendLine("Errors:");
+
+                foreach (var entry in ModelState)
+                {
+                    logMessage.AppendLine(entry.Key);
+
+                    foreach (var error in entry.Value.Errors)
+                    {
+                        logMessage.AppendLine($"\t{error.ErrorMessage}");
+                    }
+                }
+
+                _logger.LogDebug(logMessage.ToString());
+
+
+                return new UnprocessableEntityObjectResult(ModelState);
+            }
+
+            //Convert Dto back to Movie
+            movie.Title = movieDto.Title;
+            movie.Description = movieDto.Description;
+            movie.ReleaseDate = movieDto.ReleaseDate;
+            movie.Rating = movieDto.Rating;
+            movie.Genre = genre;
+
+            //Update the repo
+            _repo.Update(movie);
+
+            //return 204 - No Content
             return NoContent();
         }
     }
