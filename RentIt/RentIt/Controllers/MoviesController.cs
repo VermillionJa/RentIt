@@ -290,19 +290,17 @@ namespace RentIt.Controllers
         /// 404 - Not Found - If no Movie with the given Id was found
         /// 204 - No Content
         /// </returns>
-        [BasicAuth("Manager")]
         [HttpPatch("{id}")]
+        [BasicAuth("Manager")]
         public IActionResult PartialUpdateMovie(int id, [FromBody] JsonPatchDocument<AddMovieDto> patchDoc)
         {
-            //Check if the patchDoc is null
             if (patchDoc == null)
             {
                 _logger.LogDebug("Partial Update Movie - 400 - Bad Request");
 
                 return BadRequest(ModelState);
             }
-
-            //Get the Movie from the repo
+            
             var movie = _repo.GetById(id);
 
             if (movie == null)
@@ -316,8 +314,7 @@ namespace RentIt.Controllers
 
                 return NotFound($"Movie with Id {id} does not exist");
             }
-
-            //Convert the Movie to a Dto
+            
             var movieDto = new AddMovieDto
             {
                 Title = movie.Title,
@@ -326,11 +323,9 @@ namespace RentIt.Controllers
                 Rating = movie.Rating,
                 Genre = movie.Genre.Name
             };
-
-            //Apply the patch to the Dto
+            
             patchDoc.ApplyTo(movieDto, ModelState);
-
-            //Validate the Dto (ModelState)
+            
             MovieGenre genre = null;
 
             if (!string.IsNullOrWhiteSpace(movieDto.Genre))
@@ -365,18 +360,46 @@ namespace RentIt.Controllers
 
                 return new UnprocessableEntityObjectResult(ModelState);
             }
-
-            //Convert Dto back to Movie
+            
             movie.Title = movieDto.Title;
             movie.Description = movieDto.Description;
             movie.ReleaseDate = movieDto.ReleaseDate;
             movie.Rating = movieDto.Rating;
             movie.Genre = genre;
-
-            //Update the repo
+            
             _repo.Update(movie);
+            
+            return NoContent();
+        }
 
-            //return 204 - No Content
+        /// <summary>
+        /// Removes the Movie with the given Id
+        /// </summary>
+        /// <param name="id">The Id of the Movie to remove</param>
+        /// <returns>
+        /// 404 - Not Found - If no Movie with the given Id was found
+        /// 204 - No Content
+        /// </returns>
+        [HttpDelete("{id}")]
+        [BasicAuth("Manager")]
+        public IActionResult RemoveMovie(int id)
+        {
+            var movie = _repo.GetById(id);
+
+            if (movie == null)
+            {
+                var logMessage = new StringBuilder();
+
+                logMessage.AppendLine("Remove Movie - 404 - Not Found");
+                logMessage.AppendLine($"The Movie with Id {id} does not exist");
+
+                _logger.LogDebug(logMessage.ToString());
+
+                return NotFound($"Movie with Id {id} does not exist");
+            }
+            
+            _repo.Remove(movie);
+            
             return NoContent();
         }
     }
