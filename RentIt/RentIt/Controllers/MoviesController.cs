@@ -247,7 +247,7 @@ namespace RentIt.Controllers
                         logMessage.AppendLine($"\t{error.ErrorMessage}");
                     }
                 }
-
+                
                 _logger.LogDebug(logMessage.ToString());
 
 
