@@ -1,5 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using RentIt.Extensions;
+using RentIt.Helpers;
+using RentIt.Models.Logging;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -75,28 +78,51 @@ namespace RentIt.Services.Logging
             {
                 return;
             }
-
-            var message = FormatMessage(logLevel, state, exception);
             
-            SendMessageToStride(message);
+            var message = state.ToString();
+            var details = new LogDetailCollection();
+
+            var strideState = state as (string Message, LogDetailCollection Details)?;
+
+            if (strideState.HasValue)
+            {
+                message = strideState.Value.Message;
+                details = strideState.Value.Details;
+            }
+
+            var fullLogMessage = FormatMessage(logLevel, message, details, exception);
+            
+            SendMessageToStride(fullLogMessage);
         }
 
-        private string FormatMessage<TState>(LogLevel logLevel, TState state, Exception exception)
+        private string FormatMessage(LogLevel logLevel, string message, LogDetailCollection details, Exception exception)
         {
-            var message = new StringBuilder();
+            var fullLogMessage = new StringBuilder();
 
-            message.AppendLine($"Level: {logLevel}");
-            message.AppendLine($"Category: {Category}");
-            message.AppendLine($"Message: {state}");
+            fullLogMessage.AppendLine($"Level: {logLevel}");
+            fullLogMessage.AppendLine($"Category: {Category}");
+            fullLogMessage.AppendLine($"Message: {message}");
+
+            if (details?.Any() == true)
+            {
+                fullLogMessage.AppendLine("Details:");
+
+                foreach (var detail in details)
+                {
+                    fullLogMessage.AppendLine($"{Chars.Tab}{detail.Key}: {detail.Value}");
+                }
+            }
 
             if (exception != null)
             {
-                message.AppendLine($"Exception Type: {exception.GetType()}");
-                message.AppendLine($"Exception Message: {exception.Message}");
-                message.AppendLine($"Exception Stack Trace: {exception.StackTrace}");
+                fullLogMessage.AppendLine("Exception:");
+
+                fullLogMessage.AppendLine($"{Chars.Tab}Exception Type: {exception.GetType()}");
+                fullLogMessage.AppendLine($"{Chars.Tab}Exception Message: {exception.Message}");
+                fullLogMessage.AppendLine($"{Chars.Tab}Exception Stack Trace: {exception.StackTrace}");
             }
 
-            return message.ToString();
+            return fullLogMessage.ToString();
         }
 
         private void SendMessageToStride(string message)

@@ -13,6 +13,7 @@ using RentIt.Models.Movies;
 using System.Text;
 using RentIt.RequestFilters.Auth;
 using Microsoft.AspNetCore.JsonPatch;
+using RentIt.Extensions;
 
 namespace RentIt.Controllers
 {
@@ -76,13 +77,8 @@ namespace RentIt.Controllers
             
             if (movie == null)
             {
-                var logMessage = new StringBuilder();
-
-                logMessage.AppendLine("Get Movie - 404 - Not Found");
-                logMessage.AppendLine($"The Movie with Id {id} does not exist");
-
-                _logger.LogDebug(logMessage.ToString());
-
+                _logger.LogStrideDebug("Failed to Get Movie", d => d.Add("Status Code", StatusCodes.Status404NotFound).Add("Movie Id", id));
+                
                 return NotFound($"Movie with Id {id} does not exist");
             }
             
@@ -114,7 +110,7 @@ namespace RentIt.Controllers
         {
             if (movieDto == null)
             {
-                _logger.LogDebug("Add Movie - 400 - Bad Request");
+                _logger.LogStrideDebug("Failed to Add Movie", d => d.Add("Status Code", StatusCodes.Status400BadRequest).AddModelState(ModelState));
 
                 return BadRequest(ModelState);
             }
@@ -133,36 +129,17 @@ namespace RentIt.Controllers
 
             if (!ModelState.IsValid)
             {
-                var logMessage = new StringBuilder();
-                
-                logMessage.AppendLine("Add Movie - 422 - Unprocessable Entity");
-                logMessage.AppendLine("Errors:");
-
-                foreach (var entry in ModelState)
-                {
-                    logMessage.AppendLine(entry.Key);
-
-                    foreach (var error in entry.Value.Errors)
-                    {
-                        logMessage.AppendLine($"\t{error.ErrorMessage}");
-                    }
-                }
-                
-                _logger.LogDebug(logMessage.ToString());
-
+                _logger.LogStrideDebug("Failed to Add Movie", d => d.Add("Status Code", StatusCodes.Status422UnprocessableEntity).AddModelState(ModelState));
 
                 return new UnprocessableEntityObjectResult(ModelState);
             }
 
             if (_repo.Exists(movieDto.Title, movieDto.ReleaseDate))
             {
-                var logMessage = new StringBuilder();
-
-                logMessage.AppendLine("Add Movie - 409 - Conflict");
-                logMessage.AppendLine($"The Movie '{movieDto.Title}' released on {movieDto.ReleaseDate.ToShortDateString()} already exists");
-
-                _logger.LogDebug(logMessage.ToString());
-
+                _logger.LogStrideDebug("Failed to Add Movie", d => d.Add("Status Code", StatusCodes.Status409Conflict)
+                                                                    .Add("Movie Title", movieDto.Title)
+                                                                    .Add("Movie Release Date", movieDto.ReleaseDate.ToShortDateString()));
+                
                 return new ConflictObjectResult($"The Movie '{movieDto.Title}' released on {movieDto.ReleaseDate.ToShortDateString()} already exists");
             }
 
@@ -187,13 +164,12 @@ namespace RentIt.Controllers
                 Genre = movie.Genre.Name
             };
 
-            var successLogMessage = new StringBuilder();
 
-            successLogMessage.AppendLine("Add Movie - 201 - Created");
-            successLogMessage.AppendLine($"The Movie '{movieDto.Title}' released on {movieDto.ReleaseDate.ToShortDateString()} was successfully added");
-
-            _logger.LogInformation(successLogMessage.ToString());
-
+            _logger.LogStrideInformation("Successfully Added Movie", d => d.Add("Status Code", StatusCodes.Status201Created)
+                                                                           .Add("Movie Id", returnDto.Id)
+                                                                           .Add("Movie Title", returnDto.Title)
+                                                                           .Add("Movie Release Date", returnDto.ReleaseDate.ToShortDateString()));
+            
             return CreatedAtRoute("GetMovie", new { Id = returnDto.Id }, returnDto);
         }
         
@@ -214,7 +190,7 @@ namespace RentIt.Controllers
         {
             if (movieDto == null)
             {
-                _logger.LogDebug("Full Update Movie - 400 - Bad Request");
+                _logger.LogStrideDebug("Failed to Fully Update Movie", d => d.Add("Status Code", StatusCodes.Status400BadRequest).AddModelState(ModelState));
 
                 return BadRequest(ModelState);
             }
@@ -233,24 +209,8 @@ namespace RentIt.Controllers
 
             if (!ModelState.IsValid)
             {
-                var logMessage = new StringBuilder();
-
-                logMessage.AppendLine("Full Update Movie - 422 - Unprocessable Entity");
-                logMessage.AppendLine("Errors:");
-
-                foreach (var entry in ModelState)
-                {
-                    logMessage.AppendLine(entry.Key);
-
-                    foreach (var error in entry.Value.Errors)
-                    {
-                        logMessage.AppendLine($"\t{error.ErrorMessage}");
-                    }
-                }
-
-                _logger.LogDebug(logMessage.ToString());
-
-
+                _logger.LogStrideDebug("Failed to Fully Update Movie", d => d.Add("Status Code", StatusCodes.Status422UnprocessableEntity).AddModelState(ModelState));
+                
                 return new UnprocessableEntityObjectResult(ModelState);
             }
 
@@ -258,13 +218,8 @@ namespace RentIt.Controllers
 
             if (movie == null)
             {
-                var logMessage = new StringBuilder();
-
-                logMessage.AppendLine("Full Update Movie - 404 - Not Found");
-                logMessage.AppendLine($"The Movie with Id {id} does not exist");
-
-                _logger.LogDebug(logMessage.ToString());
-
+                _logger.LogStrideDebug("Failed to Fully Update Movie", d => d.Add("Status Code", StatusCodes.Status404NotFound).Add("Movie Id", id));
+                
                 return NotFound($"Movie with Id {id} does not exist");
             }
 
@@ -275,6 +230,9 @@ namespace RentIt.Controllers
             movie.Genre = genre;
 
             _repo.Update(movie);
+            
+            _logger.LogStrideInformation("Successfully Fully Updated Movie", d => d.Add("Status Code", StatusCodes.Status204NoContent)
+                                                                                   .Add("Movie Id", movie.Id));
 
             return NoContent();
         }
@@ -296,7 +254,7 @@ namespace RentIt.Controllers
         {
             if (patchDoc == null)
             {
-                _logger.LogDebug("Partial Update Movie - 400 - Bad Request");
+                _logger.LogStrideDebug("Failed to Partially Update Movie", d => d.Add("Status Code", StatusCodes.Status400BadRequest).AddModelState(ModelState));
 
                 return BadRequest(ModelState);
             }
@@ -305,12 +263,7 @@ namespace RentIt.Controllers
 
             if (movie == null)
             {
-                var logMessage = new StringBuilder();
-
-                logMessage.AppendLine("Partial Update Movie - 404 - Not Found");
-                logMessage.AppendLine($"The Movie with Id {id} does not exist");
-
-                _logger.LogDebug(logMessage.ToString());
+                _logger.LogStrideDebug("Failed to Partially Update Movie", d => d.Add("Status Code", StatusCodes.Status404NotFound).Add("Movie Id", id));
 
                 return NotFound($"Movie with Id {id} does not exist");
             }
@@ -340,24 +293,8 @@ namespace RentIt.Controllers
             
             if (!TryValidateModel(movieDto))
             {
-                var logMessage = new StringBuilder();
-
-                logMessage.AppendLine("Partial Update Movie - 422 - Unprocessable Entity");
-                logMessage.AppendLine("Errors:");
-
-                foreach (var entry in ModelState)
-                {
-                    logMessage.AppendLine(entry.Key);
-
-                    foreach (var error in entry.Value.Errors)
-                    {
-                        logMessage.AppendLine($"\t{error.ErrorMessage}");
-                    }
-                }
-
-                _logger.LogDebug(logMessage.ToString());
-
-
+                _logger.LogStrideDebug("Failed to Partially Update Movie", d => d.Add("Status Code", StatusCodes.Status422UnprocessableEntity).AddModelState(ModelState));
+                
                 return new UnprocessableEntityObjectResult(ModelState);
             }
             
@@ -368,7 +305,10 @@ namespace RentIt.Controllers
             movie.Genre = genre;
             
             _repo.Update(movie);
-            
+
+            _logger.LogStrideInformation("Successfully Partially Updated Movie", d => d.Add("Status Code", StatusCodes.Status204NoContent)
+                                                                                       .Add("Movie Id", movie.Id));
+
             return NoContent();
         }
 
@@ -388,18 +328,16 @@ namespace RentIt.Controllers
 
             if (movie == null)
             {
-                var logMessage = new StringBuilder();
-
-                logMessage.AppendLine("Remove Movie - 404 - Not Found");
-                logMessage.AppendLine($"The Movie with Id {id} does not exist");
-
-                _logger.LogDebug(logMessage.ToString());
+                _logger.LogStrideDebug("Failed to Remove Movie", d => d.Add("Status Code", StatusCodes.Status404NotFound).Add("Movie Id", id));
 
                 return NotFound($"Movie with Id {id} does not exist");
             }
             
             _repo.Remove(movie);
-            
+
+            _logger.LogStrideInformation("Successfully Removed Movie", d => d.Add("Status Code", StatusCodes.Status204NoContent)
+                                                                             .Add("Movie Id", movie.Id));
+
             return NoContent();
         }
     }
