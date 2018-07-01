@@ -9,17 +9,19 @@ using System.Threading.Tasks;
 
 namespace RentIt.MappingProfiles
 {
+    /// <summary>
+    /// Represents an AutoMapper Profile configured for use in the RentIt Application
+    /// </summary>
     public class AppMappingProfile : Profile
     {
+        /// <summary>
+        /// Initializes a new instance of the AppMappingProfile class
+        /// </summary>
+        /// <param name="moviesRepo">The Movies Repo for accessing Movie resources</param>
         public AppMappingProfile(IMoviesRepo moviesRepo)
         {
-            //Movie -> MovieDto
             CreateMap<Movie, MovieDto>().ForMember(dest => dest.Genre, opt => opt.MapFrom(src => src.Genre.Name));
-
-            //Movie -> AddMovieDto
             CreateMap<Movie, AddMovieDto>().ForMember(dest => dest.Genre, opt => opt.MapFrom(src => src.Genre.Name));
-
-            //AddMovieDto -> Movie
             CreateMap<AddMovieDto, Movie>().ForMember(dest => dest.Genre, opt => opt.ResolveUsing(src => moviesRepo.GetGenreByName(src.Genre)));
         }
     }
