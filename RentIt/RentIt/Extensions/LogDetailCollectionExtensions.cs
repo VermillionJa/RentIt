@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using RentIt.Helpers;
 using RentIt.Models.Logging;
 using System;
 using System.Collections.Generic;
@@ -55,20 +56,15 @@ namespace RentIt.Extensions
 
             foreach (var entry in modelState)
             {
-                value.AppendLine($"{GetTabs(1)}{entry.Key}");
+                value.AppendLine($"{Chars.Tab.Repeat(2)}{entry.Key}");
 
                 foreach (var error in entry.Value.Errors)
                 {
-                    value.AppendLine($"{GetTabs(2)}{error.ErrorMessage}");
+                    value.AppendLine($"{Chars.Tab.Repeat(3)}{error.ErrorMessage}");
                 }
             }
 
             return detailCollection.Add("ModelState", value.ToString());
-        }
-
-        private static string GetTabs(int count)
-        {
-            return new string(Tab, count);
         }
     }
 }
