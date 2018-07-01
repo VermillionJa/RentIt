@@ -14,6 +14,7 @@ using System.Text;
 using RentIt.RequestFilters.Auth;
 using Microsoft.AspNetCore.JsonPatch;
 using RentIt.Extensions;
+using AutoMapper;
 
 namespace RentIt.Controllers
 {
@@ -26,16 +27,19 @@ namespace RentIt.Controllers
     {
         private readonly IMoviesRepo _repo;
         private readonly ILogger<MoviesController> _logger;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Initializes a new instance of the MoviesController
         /// </summary>
         /// <param name="repo">The Movies Repository injected via DI</param>
         /// <param name="logger">The Logger Service injected via DI</param>
-        public MoviesController(IMoviesRepo repo, ILogger<MoviesController> logger)
+        /// <param name="mapper">The AutoMapper Mapper injected via DI</param>
+        public MoviesController(IMoviesRepo repo, ILogger<MoviesController> logger, IMapper mapper)
         {
             _repo = repo;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -47,17 +51,9 @@ namespace RentIt.Controllers
         [HttpGet]
         public IActionResult GetMovies()
         {
-            var movies = _repo.GetAll();
+            var movies = _repo.GetAllMovies();
             
-            var movieDtos = movies.Select(m => new MovieDto()
-            {
-                Id = m.Id,
-                Title = m.Title,
-                Description = m.Description,
-                ReleaseDate = m.ReleaseDate,
-                Rating = m.Rating,
-                Genre = m.Genre.Name
-            });
+            var movieDtos = _mapper.Map<IEnumerable<MovieDto>>(movies);
             
             return Ok(movieDtos);
         }
@@ -73,7 +69,7 @@ namespace RentIt.Controllers
         [HttpGet("{id}", Name = "GetMovie")]
         public IActionResult GetMovie(int id)
         {
-            var movie = _repo.GetById(id);
+            var movie = _repo.GetMovieById(id);
             
             if (movie == null)
             {
@@ -81,16 +77,8 @@ namespace RentIt.Controllers
                 
                 return NotFound($"Movie with Id {id} does not exist");
             }
-            
-            var movieDto = new MovieDto
-            {
-                Id = movie.Id,
-                Title = movie.Title,
-                Description = movie.Description,
-                ReleaseDate = movie.ReleaseDate,
-                Rating = movie.Rating,
-                Genre = movie.Genre.Name
-            };
+
+            var movieDto = _mapper.Map<MovieDto>(movie);
 
             return Ok(movieDto);
         }
@@ -115,13 +103,9 @@ namespace RentIt.Controllers
                 return BadRequest(ModelState);
             }
 
-            MovieGenre genre = null;
-
             if (!string.IsNullOrWhiteSpace(movieDto.Genre))
             {
-                genre = _repo.GetGenreByName(movieDto.Genre);
-
-                if (genre == null)
+                if (!_repo.GenreExists(movieDto.Genre))
                 {
                     ModelState.AddModelError(nameof(movieDto.Genre), $"{movieDto.Genre} is not a valid Genre");
                 }
@@ -134,7 +118,7 @@ namespace RentIt.Controllers
                 return new UnprocessableEntityObjectResult(ModelState);
             }
 
-            if (_repo.Exists(movieDto.Title, movieDto.ReleaseDate))
+            if (_repo.MovieExists(movieDto.Title, movieDto.ReleaseDate))
             {
                 _logger.LogStrideDebug("Failed to Add Movie", d => d.Add("Status Code", StatusCodes.Status409Conflict)
                                                                     .Add("Movie Title", movieDto.Title)
@@ -143,28 +127,12 @@ namespace RentIt.Controllers
                 return new ConflictObjectResult($"The Movie '{movieDto.Title}' released on {movieDto.ReleaseDate.ToShortDateString()} already exists");
             }
 
-            var movie = new Movie
-            {
-                Title = movieDto.Title,
-                Description = movieDto.Description,
-                ReleaseDate = movieDto.ReleaseDate,
-                Rating = movieDto.Rating,
-                Genre = genre
-            };
+            var movie = _mapper.Map<Movie>(movieDto);
 
-            _repo.Add(movie);
+            _repo.AddMovie(movie);
+
+            var returnDto = _mapper.Map<MovieDto>(movie);
             
-            var returnDto = new MovieDto
-            {
-                Id = movie.Id,
-                Title = movie.Title,
-                Description = movie.Description,
-                ReleaseDate = movie.ReleaseDate,
-                Rating = movie.Rating,
-                Genre = movie.Genre.Name
-            };
-
-
             _logger.LogStrideInformation("Successfully Added Movie", d => d.Add("Status Code", StatusCodes.Status201Created)
                                                                            .Add("Movie Id", returnDto.Id)
                                                                            .Add("Movie Title", returnDto.Title)
@@ -195,13 +163,9 @@ namespace RentIt.Controllers
                 return BadRequest(ModelState);
             }
 
-            MovieGenre genre = null;
-
             if (!string.IsNullOrWhiteSpace(movieDto.Genre))
             {
-                genre = _repo.GetGenreByName(movieDto.Genre);
-
-                if (genre == null)
+                if (!_repo.GenreExists(movieDto.Genre))
                 {
                     ModelState.AddModelError(nameof(movieDto.Genre), $"{movieDto.Genre} is not a valid Genre");
                 }
@@ -214,7 +178,7 @@ namespace RentIt.Controllers
                 return new UnprocessableEntityObjectResult(ModelState);
             }
 
-            var movie = _repo.GetById(id);
+            var movie = _repo.GetMovieById(id);
 
             if (movie == null)
             {
@@ -223,13 +187,9 @@ namespace RentIt.Controllers
                 return NotFound($"Movie with Id {id} does not exist");
             }
 
-            movie.Title = movieDto.Title;
-            movie.Description = movieDto.Description;
-            movie.ReleaseDate = movieDto.ReleaseDate;
-            movie.Rating = movieDto.Rating;
-            movie.Genre = genre;
+            _mapper.Map(movieDto, movie);
 
-            _repo.Update(movie);
+            _repo.UpdateMovie(movie);
             
             _logger.LogStrideInformation("Successfully Fully Updated Movie", d => d.Add("Status Code", StatusCodes.Status204NoContent)
                                                                                    .Add("Movie Id", movie.Id));
@@ -259,7 +219,7 @@ namespace RentIt.Controllers
                 return BadRequest(ModelState);
             }
             
-            var movie = _repo.GetById(id);
+            var movie = _repo.GetMovieById(id);
 
             if (movie == null)
             {
@@ -267,44 +227,29 @@ namespace RentIt.Controllers
 
                 return NotFound($"Movie with Id {id} does not exist");
             }
-            
-            var movieDto = new AddMovieDto
-            {
-                Title = movie.Title,
-                Description = movie.Description,
-                ReleaseDate = movie.ReleaseDate,
-                Rating = movie.Rating,
-                Genre = movie.Genre.Name
-            };
+
+            var movieDto = _mapper.Map<AddMovieDto>(movie);
             
             patchDoc.ApplyTo(movieDto, ModelState);
-            
-            MovieGenre genre = null;
 
             if (!string.IsNullOrWhiteSpace(movieDto.Genre))
             {
-                genre = _repo.GetGenreByName(movieDto.Genre);
-
-                if (genre == null)
+                if (!_repo.GenreExists(movieDto.Genre))
                 {
                     ModelState.AddModelError(nameof(movieDto.Genre), $"{movieDto.Genre} is not a valid Genre");
                 }
             }
-            
+
             if (!TryValidateModel(movieDto))
             {
                 _logger.LogStrideDebug("Failed to Partially Update Movie", d => d.Add("Status Code", StatusCodes.Status422UnprocessableEntity).AddModelState(ModelState));
                 
                 return new UnprocessableEntityObjectResult(ModelState);
             }
-            
-            movie.Title = movieDto.Title;
-            movie.Description = movieDto.Description;
-            movie.ReleaseDate = movieDto.ReleaseDate;
-            movie.Rating = movieDto.Rating;
-            movie.Genre = genre;
-            
-            _repo.Update(movie);
+
+            _mapper.Map(movieDto, movie);
+
+            _repo.UpdateMovie(movie);
 
             _logger.LogStrideInformation("Successfully Partially Updated Movie", d => d.Add("Status Code", StatusCodes.Status204NoContent)
                                                                                        .Add("Movie Id", movie.Id));
@@ -324,7 +269,7 @@ namespace RentIt.Controllers
         [BasicAuth("Manager")]
         public IActionResult RemoveMovie(int id)
         {
-            var movie = _repo.GetById(id);
+            var movie = _repo.GetMovieById(id);
 
             if (movie == null)
             {
@@ -333,7 +278,7 @@ namespace RentIt.Controllers
                 return NotFound($"Movie with Id {id} does not exist");
             }
             
-            _repo.Remove(movie);
+            _repo.RemoveMovie(movie);
 
             _logger.LogStrideInformation("Successfully Removed Movie", d => d.Add("Status Code", StatusCodes.Status204NoContent)
                                                                              .Add("Movie Id", movie.Id));

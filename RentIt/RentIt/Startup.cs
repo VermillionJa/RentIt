@@ -50,13 +50,13 @@ namespace RentIt
 
             services.AddTransient<IPricingLookup, PricingLookup>();
 
-            services.AddSingleton(provider => new MapperConfiguration(cfg =>
+            services.AddScoped(provider => new MapperConfiguration(cfg =>
             {
                 var moviesRepo = provider.GetService<IMoviesRepo>();
 
                 cfg.AddProfile(new AppMappingProfile(moviesRepo));
-            }));
-
+            }).CreateMapper());
+            
             services.AddMvc();
         }
 
