@@ -28,7 +28,7 @@ namespace RentIt.Services.Repositories
         /// Retrieves all of the Movies
         /// </summary>
         /// <returns>A collection of Movies</returns>
-        public IEnumerable<Movie> GetAll()
+        public IEnumerable<Movie> GetAllMovies()
         {
             return _context.Movies.Include(m => m.Genre);
         }
@@ -38,7 +38,7 @@ namespace RentIt.Services.Repositories
         /// </summary>
         /// <param name="id">The Id of the Movie to get</param>
         /// <returns>The Movie with the given Id</returns>
-        public Movie GetById(int id)
+        public Movie GetMovieById(int id)
         {
             return _context.Movies.Include(m => m.Genre).SingleOrDefault(m => m.Id == id);
         }
@@ -47,7 +47,7 @@ namespace RentIt.Services.Repositories
         /// Adds the given Movie to the Repository
         /// </summary>
         /// <param name="movie">The Movie to add</param>
-        public void Add(Movie movie)
+        public void AddMovie(Movie movie)
         {
             _context.Movies.Add(movie);
             _context.SaveChanges();
@@ -57,7 +57,7 @@ namespace RentIt.Services.Repositories
         /// Updates a Movie
         /// </summary>
         /// <param name="movie">The updated Movie data</param>
-        public void Update(Movie movie)
+        public void UpdateMovie(Movie movie)
         {
             _context.Movies.Update(movie);
             _context.SaveChanges();
@@ -67,29 +67,19 @@ namespace RentIt.Services.Repositories
         /// Removes the Movie with the given Id
         /// </summary>
         /// <param name="id">The Id of the Movie to remove</param>
-        public void Remove(int id)
+        public void RemoveMovie(int id)
         {
-            Remove(GetById(id));
+            RemoveMovie(GetMovieById(id));
         }
 
         /// <summary>
         /// Removes the given Movie
         /// </summary>
         /// <param name="movie">The Movie to remove</param>
-        public void Remove(Movie movie)
+        public void RemoveMovie(Movie movie)
         {
             _context.Movies.Remove(movie);
             _context.SaveChanges();
-        }
-
-        /// <summary>
-        /// Gets the Movie Genre with the given name
-        /// </summary>
-        /// <param name="genre">The name of the Genre</param>
-        /// <returns>The Movie Genre with the given name</returns>
-        public MovieGenre GetGenreByName(string genre)
-        {
-            return _context.MovieGenres.FirstOrDefault(g => g.Name.ToUpper() == genre.ToUpper());
         }
 
         /// <summary>
@@ -98,9 +88,29 @@ namespace RentIt.Services.Repositories
         /// <param name="title">The Title of the Movie</param>
         /// <param name="releaseDate">The Release Date of the Movie</param>
         /// <returns>True if a Movie exists with the same Title and Release Date</returns>
-        public bool Exists(string title, DateTime releaseDate)
+        public bool MovieExists(string title, DateTime releaseDate)
         {
             return _context.Movies.Any(m => m.Title.ToUpper() == title.ToUpper() && m.ReleaseDate.Date == releaseDate.Date);
+        }
+
+        /// <summary>
+        /// Gets the Movie Genre with the given name
+        /// </summary>
+        /// <param name="name">The Name of the Genre</param>
+        /// <returns>The Movie Genre with the given Name</returns>
+        public MovieGenre GetGenreByName(string name)
+        {
+            return _context.MovieGenres.FirstOrDefault(g => g.Name.ToUpper() == name.ToUpper());
+        }
+
+        /// <summary>
+        /// Checks to see if a Genre exists with the same Name
+        /// </summary>
+        /// <param name="name">The Name of the Genre</param>
+        /// <returns>True if a Genre exists with the same Name</returns>
+        public bool GenreExists(string name)
+        {
+            return _context.MovieGenres.Any(g => g.Name.ToUpper() == name.ToUpper());
         }
     }
 }

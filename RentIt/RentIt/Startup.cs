@@ -13,6 +13,8 @@ using Microsoft.EntityFrameworkCore;
 using RentIt.Services.Repositories;
 using RentIt.Extensions;
 using RentIt.Services;
+using AutoMapper;
+using RentIt.MappingProfiles;
 
 namespace RentIt
 {
@@ -48,6 +50,13 @@ namespace RentIt
 
             services.AddTransient<IPricingLookup, PricingLookup>();
 
+            services.AddScoped(provider => new MapperConfiguration(cfg =>
+            {
+                var moviesRepo = provider.GetService<IMoviesRepo>();
+
+                cfg.AddProfile(new AppMappingProfile(moviesRepo));
+            }).CreateMapper());
+            
             services.AddMvc();
         }
 
@@ -62,7 +71,7 @@ namespace RentIt
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            
             app.UseMvc();
         }
     }
