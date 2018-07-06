@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
+using RentIt.Models.Auth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,36 +16,37 @@ namespace RentIt.RequestFilters.Auth
     /// </summary>
     public class BasicAuthAttribute : TypeFilterAttribute
     {
-        private const string DefaultProfile = "Employee";
+        private const BasicAuthRole DefaultRole = BasicAuthRole.Employee;
 
         /// <summary>
         /// Initializes a new instance of the BasicAuthAttribute class using the default Profile
         /// </summary>
-        public BasicAuthAttribute() : base(typeof(BasicAuthAttributeImpl))
+        public BasicAuthAttribute() : this(DefaultRole)
         {
-            Arguments = new[] { DefaultProfile };
+
         }
 
         /// <summary>
         /// Initializes a new instance of the BasicAuthAttribute class using the given Profile
         /// </summary>
-        /// <param name="profile">The Profile to use for validating the Basic Authentication</param>
-        public BasicAuthAttribute(string profile) : base(typeof(BasicAuthAttributeImpl))
+        /// <param name="role">The Profile to use for validating the Basic Authentication</param>
+        public BasicAuthAttribute(BasicAuthRole role) : base(typeof(BasicAuthAttributeImpl))
         {
-            Arguments = new[] { profile };
+            Arguments = new[] { role }.Cast<object>().ToArray();
         }
 
         private class BasicAuthAttributeImpl : IActionFilter
         {
             private const string BasicEncodingFormat = "ISO-8859-1";
 
-            private readonly string _username;
-            private readonly string _password;
+            private readonly IEnumerable<BasicAuthProfile> _profiles;
+            private readonly BasicAuthRole _role;
 
-            public BasicAuthAttributeImpl(string profile, IConfiguration config)
+            public BasicAuthAttributeImpl(BasicAuthRole role, IConfiguration config)
             {
-                _username = config[$"Auth:{profile}:Username"];
-                _password = config[$"Auth:{profile}:Password"];
+                _role = role;
+
+                _profiles = config.GetSection("Auth:Profiles").Get<IEnumerable<BasicAuthProfile>>();
             }
 
             public void OnActionExecuting(ActionExecutingContext context)
@@ -73,9 +75,26 @@ namespace RentIt.RequestFilters.Auth
                         var username = credentials[0];
                         var password = credentials[1];
 
-                        if (username == _username && password == _password)
+                        foreach (var profile in _profiles)
                         {
-                            return true;
+                            if (profile.Username != username)
+                            {
+                                continue;
+                            }
+                            
+                            if (profile.Password != password)
+                            {
+                                break;
+                            }
+                            
+                            if (profile.Roles.Contains(_role))
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
                     }
                 }

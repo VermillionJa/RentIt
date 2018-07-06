@@ -10,7 +10,7 @@ namespace RentIt.Data
     /// <summary>
     /// Represents the Entity Framework interface for accessing entities stored in the database
     /// </summary>
-    public class AppDbContext : DbContext
+    public class AppDbContext : DbContext, IDbContext
     {
         /// <summary>
         /// The Customers stored in the database

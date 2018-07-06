@@ -13,13 +13,13 @@ namespace RentIt.Services.Repositories
     /// </summary>
     public class MoviesRepo : IMoviesRepo
     {
-        private readonly AppDbContext _context;
+        private readonly IDbContext _context;
 
         /// <summary>
         /// Initializes a new instance of the MoviesRepo class
         /// </summary>
         /// <param name="context">The AppDbContext injected via DI</param>
-        public MoviesRepo(AppDbContext context)
+        public MoviesRepo(IDbContext context)
         {
             _context = context;
         }

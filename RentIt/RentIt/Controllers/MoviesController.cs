@@ -15,6 +15,7 @@ using RentIt.RequestFilters.Auth;
 using Microsoft.AspNetCore.JsonPatch;
 using RentIt.Extensions;
 using AutoMapper;
+using RentIt.Models.Auth;
 
 namespace RentIt.Controllers
 {
@@ -49,6 +50,7 @@ namespace RentIt.Controllers
         /// 200 - Ok - Returns a collection with all of the Movies
         /// </returns>
         [HttpGet]
+        [BasicAuth]
         public IActionResult GetMovies()
         {
             var movies = _repo.GetAllMovies();
@@ -67,6 +69,7 @@ namespace RentIt.Controllers
         /// 200 - Ok - Returns a collection with all of the Movies
         /// </returns>
         [HttpGet("{id}", Name = "GetMovie")]
+        [BasicAuth]
         public IActionResult GetMovie(int id)
         {
             var movie = _repo.GetMovieById(id);
@@ -93,7 +96,7 @@ namespace RentIt.Controllers
         /// 201 - Created - If the Movie was successfully added, also returns the URL to GET the new Movie at and the Movie object
         /// </returns>
         [HttpPost]
-        [BasicAuth("Manager")]
+        [BasicAuth(BasicAuthRole.Manager)]
         public IActionResult AddMovie([FromBody] AddMovieDto movieDto)
         {
             if (movieDto == null)
@@ -152,8 +155,8 @@ namespace RentIt.Controllers
         /// 404 - Not Found - If no Movie with the given Id was found
         /// 204 - No Content
         /// </returns>
-        [BasicAuth("Manager")]
         [HttpPut("{id}")]
+        [BasicAuth(BasicAuthRole.Manager)]
         public IActionResult FullUpdateMovie(int id, [FromBody] AddMovieDto movieDto)
         {
             if (movieDto == null)
@@ -209,7 +212,7 @@ namespace RentIt.Controllers
         /// 204 - No Content
         /// </returns>
         [HttpPatch("{id}")]
-        [BasicAuth("Manager")]
+        [BasicAuth(BasicAuthRole.Manager)]
         public IActionResult PartialUpdateMovie(int id, [FromBody] JsonPatchDocument<AddMovieDto> patchDoc)
         {
             if (patchDoc == null)
@@ -266,7 +269,7 @@ namespace RentIt.Controllers
         /// 204 - No Content
         /// </returns>
         [HttpDelete("{id}")]
-        [BasicAuth("Manager")]
+        [BasicAuth(BasicAuthRole.Manager)]
         public IActionResult RemoveMovie(int id)
         {
             var movie = _repo.GetMovieById(id);
