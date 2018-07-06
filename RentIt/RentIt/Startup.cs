@@ -44,6 +44,8 @@ namespace RentIt
 
             services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(_config.GetConnectionString("Default")));
 
+            services.AddScoped<IDbContext, AppDbContext>();
+
             services.AddScoped<ICustomerRepo, CustomerRepo>();
             services.AddScoped<IInventoryRepo, InventoryRepo>();
             services.AddScoped<IMoviesRepo, MoviesRepo>();
