@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using RentIt.Extensions;
 using AutoMapper;
 using RentIt.Models.Auth;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace RentIt.Controllers
 {
@@ -51,6 +52,7 @@ namespace RentIt.Controllers
         /// </returns>
         [HttpGet]
         [BasicAuth]
+        [SwaggerResponse(200, typeof(IEnumerable<MovieDto>), Description = "A collection with all of the Movies")]
         public IActionResult GetMovies()
         {
             var movies = _repo.GetAllMovies();
@@ -66,10 +68,12 @@ namespace RentIt.Controllers
         /// <param name="id">The Id of the Movie to get</param>
         /// <returns>
         /// 404 - Not Found - If no Movie with the given Id was found
-        /// 200 - Ok - Returns a collection with all of the Movies
+        /// 200 - Ok - Returns the Movie with the given Id
         /// </returns>
         [HttpGet("{id}", Name = "GetMovie")]
         [BasicAuth]
+        [SwaggerResponse(404, Description = "No Movie with the given Id was found")]
+        [SwaggerResponse(200, typeof(MovieDto), Description = "The Movie with the given Id")]
         public IActionResult GetMovie(int id)
         {
             var movie = _repo.GetMovieById(id);
@@ -97,6 +101,9 @@ namespace RentIt.Controllers
         /// </returns>
         [HttpPost]
         [BasicAuth(BasicAuthRole.Manager)]
+        [SwaggerResponse(400, Description = "The JSON syntax is invalid")]
+        [SwaggerResponse(422, Description = "The JSON syntax is valid, but the content is invalid")]
+        [SwaggerResponse(201, typeof(MovieDto), Description = "A Movie Dto containing the data for the Movie that was added")]
         public IActionResult AddMovie([FromBody] AddMovieDto movieDto)
         {
             if (movieDto == null)
@@ -143,10 +150,23 @@ namespace RentIt.Controllers
             
             return CreatedAtRoute("GetMovie", new { Id = returnDto.Id }, returnDto);
         }
-        
+
         /// <summary>
         /// Performs a full update of the Movie with the given Id
         /// </summary>
+        /// <remarks>
+        /// Sample Call:
+        /// 
+        ///     PUT /api/Movies/2
+        ///     {
+        ///         "title": "Test Movie - Full Update",
+        ///         "description": "This is a Test Movie",
+        ///         "releaseDate": "2018-07-01",
+        ///         "rating": "R",
+        ///         "genre": "Action"
+        ///     }
+        /// 
+        /// </remarks>
         /// <param name="id">The Id of the Movie to update</param>
         /// <param name="movieDto">The new data to update the Movie with</param>
         /// <returns>
@@ -157,6 +177,10 @@ namespace RentIt.Controllers
         /// </returns>
         [HttpPut("{id}")]
         [BasicAuth(BasicAuthRole.Manager)]
+        [SwaggerResponse(400, Description = "The JSON syntax is invalid")]
+        [SwaggerResponse(422, Description = "The JSON syntax is valid, but the content is invalid")]
+        [SwaggerResponse(404, Description = "No movie with the given Id was found")]
+        [SwaggerResponse(204)]
         public IActionResult FullUpdateMovie(int id, [FromBody] AddMovieDto movieDto)
         {
             if (movieDto == null)
@@ -213,6 +237,10 @@ namespace RentIt.Controllers
         /// </returns>
         [HttpPatch("{id}")]
         [BasicAuth(BasicAuthRole.Manager)]
+        [SwaggerResponse(400, Description = "The JSON syntax is invalid")]
+        [SwaggerResponse(422, Description = "The JSON syntax is valid, but the content is invalid")]
+        [SwaggerResponse(404, Description = "No movie with the given Id was found")]
+        [SwaggerResponse(204)]
         public IActionResult PartialUpdateMovie(int id, [FromBody] JsonPatchDocument<AddMovieDto> patchDoc)
         {
             if (patchDoc == null)
@@ -263,6 +291,12 @@ namespace RentIt.Controllers
         /// <summary>
         /// Removes the Movie with the given Id
         /// </summary>
+        /// <remarks>
+        /// Sample Call:
+        /// 
+        ///     DELETE /api/Movies/2
+        /// 
+        /// </remarks>
         /// <param name="id">The Id of the Movie to remove</param>
         /// <returns>
         /// 404 - Not Found - If no Movie with the given Id was found
@@ -270,6 +304,8 @@ namespace RentIt.Controllers
         /// </returns>
         [HttpDelete("{id}")]
         [BasicAuth(BasicAuthRole.Manager)]
+        [SwaggerResponse(404, Description = "No movie with the given Id was found")]
+        [SwaggerResponse(204)]
         public IActionResult RemoveMovie(int id)
         {
             var movie = _repo.GetMovieById(id);

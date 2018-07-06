@@ -15,6 +15,9 @@ using RentIt.Extensions;
 using RentIt.Services;
 using AutoMapper;
 using RentIt.MappingProfiles;
+using Swashbuckle.AspNetCore.Swagger;
+using System.IO;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace RentIt
 {
@@ -60,6 +63,16 @@ namespace RentIt
             }).CreateMapper());
             
             services.AddMvc();
+
+            services.AddSwaggerGen(cfg =>
+            {
+                cfg.SwaggerDoc("v1", new Info { Title = "RentIt API", Version = "v1" });
+
+                cfg.DescribeAllEnumsAsStrings();
+
+                var xmlDocFilePath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "RentIt.xml");
+                cfg.IncludeXmlComments(xmlDocFilePath);
+            });
         }
 
         /// <summary>
@@ -73,7 +86,15 @@ namespace RentIt
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseSwagger();
             
+            app.UseSwaggerUI(cfg =>
+            {
+                cfg.SwaggerEndpoint("/swagger/v1/swagger.json", "RentIt API");
+                cfg.RoutePrefix = string.Empty;
+            });
+
             app.UseMvc();
         }
     }
